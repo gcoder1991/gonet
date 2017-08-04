@@ -1,7 +1,15 @@
 package base
 
-import "net"
+import (
+	"net"
+)
 
 type Protocol struct {
-	Parser func(conn *net.Conn) (p Protocol)
+	ProtocolProcessor
 }
+
+type ProtocolProcessor interface {
+	Processor(protocol Protocol) error
+	Parser(conn *net.TCPConn) (p Protocol, err error)
+}
+

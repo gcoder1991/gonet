@@ -2,21 +2,28 @@ package server
 
 import (
 	"fmt"
+	"github.com/gcoder1991/gonet/base"
 	"log"
 	"net"
 	"sync"
 )
 
 type TcpServer struct {
+	protocol base.Protocol
+
 	Addr     *net.TCPAddr
 	Listener *net.TCPListener
 
-	closeWait *sync.WaitGroup
+	Handler
 
-	OnActive   func(conn *net.TCPConn)
-	OnInactive func(conn *net.TCPConn)
-	OnRead     func(conn *net.TCPConn)
-	OnError    func(conn *net.TCPConn)
+	closeWait *sync.WaitGroup
+}
+
+type Handler interface {
+	OnActive(conn *net.TCPConn)
+	OnInactive(conn *net.TCPConn)
+	OnRead(conn *net.TCPConn, protocol base.Protocol)
+	OnError(conn *net.TCPConn, err error)
 }
 
 func (ts *TcpServer) Start() error {
@@ -39,11 +46,16 @@ func (ts *TcpServer) Start() error {
 		go func() {
 			defer func() {
 				tcpConn.Close()
-				go ts.OnInactive(tcpConn)
+				ts.OnInactive(tcpConn)
 			}()
-			go ts.OnActive(tcpConn)
+			ts.OnActive(tcpConn)
 			for {
-
+				p, err := ts.protocol.Parser(tcpConn)
+				if err != nil {
+					ts.OnError(tcpConn, err)
+					continue
+				}
+				ts.OnRead(tcpConn, p)
 			}
 		}()
 	}
