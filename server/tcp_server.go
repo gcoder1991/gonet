@@ -14,16 +14,9 @@ type TcpServer struct {
 	Addr     *net.TCPAddr
 	Listener *net.TCPListener
 
-	Handler
+	base.TcpHandler
 
 	closeWait *sync.WaitGroup
-}
-
-type Handler interface {
-	OnActive(conn *net.TCPConn)
-	OnInactive(conn *net.TCPConn)
-	OnRead(conn *net.TCPConn, protocol base.Protocol)
-	OnError(conn *net.TCPConn, err error)
 }
 
 func (ts *TcpServer) Start() error {
