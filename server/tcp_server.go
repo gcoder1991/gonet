@@ -37,8 +37,14 @@ func (ts *TcpServer) Start() error {
 		}
 
 		go func() {
+			defer func() {
+				tcpConn.Close()
+				go ts.OnInactive(tcpConn)
+			}()
 			go ts.OnActive(tcpConn)
-			// TODO
+			for {
+
+			}
 		}()
 	}
 }
